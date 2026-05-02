@@ -1,0 +1,48 @@
+// Demo Data
+const USERS=[
+{id:101,username:"aryan_shah",email:"aryan@trade.com",full_name:"Aryan Shah",country:"India",kyc:"Y",status:"ACTIVE",created:"2026-01-15"},
+{id:102,username:"priya_k",email:"priya@trade.com",full_name:"Priya Kumar",country:"India",kyc:"Y",status:"ACTIVE",created:"2026-02-01"},
+{id:103,username:"ravi_m",email:"ravi@trade.com",full_name:"Ravi Menon",country:"USA",kyc:"N",status:"ACTIVE",created:"2026-02-20"},
+{id:104,username:"test_sus",email:"sus@trade.com",full_name:"Suspended User",country:"UK",kyc:"Y",status:"SUSPENDED",created:"2026-03-05"}
+];
+const ASSETS=[
+{id:1,symbol:"BTC",name:"Bitcoin",type:"CRYPTO",exchange:"Binance",currency:"USD",active:"Y"},
+{id:2,symbol:"ETH",name:"Ethereum",type:"CRYPTO",exchange:"Binance",currency:"USD",active:"Y"},
+{id:3,symbol:"SOL",name:"Solana",type:"CRYPTO",exchange:"Binance",currency:"USD",active:"Y"},
+{id:4,symbol:"AAPL",name:"Apple Inc",type:"STOCK",exchange:"NASDAQ",currency:"USD",active:"Y"},
+{id:5,symbol:"TSLA",name:"Tesla Inc",type:"STOCK",exchange:"NASDAQ",currency:"USD",active:"Y"}
+];
+const BASE_PRICES={1:62000,2:3200,3:145,4:189,5:254};
+function genPrices(){const p={};for(const[aid,base]of Object.entries(BASE_PRICES)){p[aid]=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);p[aid].push({date:d.toISOString().slice(0,10),close:+(base*(1+(.1*Math.random()-.05))).toFixed(2),vol:Math.floor(1000+Math.random()*9000)})}}return p}
+const PRICES=genPrices();
+function latestPrice(aid){const arr=PRICES[aid];return arr?arr[arr.length-1].close:0}
+let WALLETS=[
+{id:1,uid:101,aid:1,balance:1.5},{id:2,uid:101,aid:2,balance:10},
+{id:3,uid:102,aid:1,balance:0.5},{id:4,uid:102,aid:3,balance:200},
+{id:5,uid:103,aid:4,balance:50}
+];
+let ORDERS=[
+{id:1,uid:101,aid:1,type:"BUY",mode:"MARKET",qty:1.5,limit:60000,status:"FILLED",placed:"2026-03-10T09:30:00",filled:"2026-03-10T09:30:01"},
+{id:2,uid:101,aid:2,type:"BUY",mode:"LIMIT",qty:10,limit:3000,status:"FILLED",placed:"2026-03-11T10:15:00",filled:"2026-03-11T10:15:02"},
+{id:3,uid:102,aid:1,type:"BUY",mode:"MARKET",qty:0.5,limit:58000,status:"FILLED",placed:"2026-03-12T14:00:00",filled:"2026-03-12T14:00:01"},
+{id:4,uid:102,aid:3,type:"BUY",mode:"MARKET",qty:200,limit:120,status:"FILLED",placed:"2026-03-13T11:45:00",filled:"2026-03-13T11:45:01"},
+{id:5,uid:103,aid:4,type:"BUY",mode:"LIMIT",qty:50,limit:180,status:"FILLED",placed:"2026-03-14T16:20:00",filled:"2026-03-14T16:20:02"},
+{id:6,uid:101,aid:3,type:"BUY",mode:"LIMIT",qty:100,limit:140,status:"PENDING",placed:"2026-04-28T08:00:00",filled:null}
+];
+let TXNS=[
+{id:1,oid:1,uid:101,aid:1,type:"BUY",qty:1.5,price:60000,total:90000,fee:135,net:89865,at:"2026-03-10T09:30:01"},
+{id:2,oid:2,uid:101,aid:2,type:"BUY",qty:10,price:3000,total:30000,fee:45,net:29955,at:"2026-03-11T10:15:02"},
+{id:3,oid:3,uid:102,aid:1,type:"BUY",qty:0.5,price:58000,total:29000,fee:43.5,net:28956.5,at:"2026-03-12T14:00:01"},
+{id:4,oid:4,uid:102,aid:3,type:"BUY",qty:200,price:120,total:24000,fee:36,net:23964,at:"2026-03-13T11:45:01"},
+{id:5,oid:5,uid:103,aid:4,type:"BUY",qty:50,price:180,total:9000,fee:13.5,net:8986.5,at:"2026-03-14T16:20:02"}
+];
+const SQL_SECTIONS=[
+{title:"CREATE TABLE — Users",desc:"Core user accounts with KYC verification and account status management.",code:`CREATE TABLE USERS (\n  user_id        NUMBER(10)    PRIMARY KEY,\n  username       VARCHAR2(50)  NOT NULL UNIQUE,\n  email          VARCHAR2(100) NOT NULL UNIQUE,\n  password_hash  VARCHAR2(256) NOT NULL,\n  full_name      VARCHAR2(100),\n  phone          VARCHAR2(20),\n  country        VARCHAR2(60),\n  kyc_verified   CHAR(1) DEFAULT 'N'\n    CHECK (kyc_verified IN ('Y','N')),\n  account_status VARCHAR2(20) DEFAULT 'ACTIVE'\n    CHECK (account_status IN ('ACTIVE','SUSPENDED','CLOSED')),\n  created_at     TIMESTAMP DEFAULT SYSTIMESTAMP\n);`},
+{title:"CREATE TABLE — Assets, Wallets, Orders, Transactions",desc:"Asset listings, user wallets with locking, order book, and transaction ledger.",code:`CREATE TABLE ASSETS (\n  asset_id   NUMBER(10) PRIMARY KEY,\n  symbol     VARCHAR2(20) NOT NULL UNIQUE,\n  asset_name VARCHAR2(100) NOT NULL,\n  asset_type VARCHAR2(20) NOT NULL\n    CHECK (asset_type IN ('CRYPTO','STOCK','ETF','COMMODITY'))\n);\n\nCREATE TABLE WALLETS (\n  wallet_id  NUMBER(10) PRIMARY KEY,\n  user_id    NUMBER(10) REFERENCES USERS(user_id),\n  asset_id   NUMBER(10) REFERENCES ASSETS(asset_id),\n  balance    NUMBER(20,8) DEFAULT 0 CHECK (balance >= 0),\n  UNIQUE (user_id, asset_id)\n);\n\nCREATE TABLE ORDERS (\n  order_id   NUMBER(15) PRIMARY KEY,\n  user_id    NUMBER(10) REFERENCES USERS(user_id),\n  asset_id   NUMBER(10) REFERENCES ASSETS(asset_id),\n  order_type VARCHAR2(10) CHECK (order_type IN ('BUY','SELL')),\n  status     VARCHAR2(15) DEFAULT 'PENDING'\n);\n\nCREATE TABLE TRANSACTIONS (\n  txn_id         NUMBER(15) PRIMARY KEY,\n  order_id       NUMBER(15) REFERENCES ORDERS(order_id),\n  quantity       NUMBER(20,8) NOT NULL,\n  price_per_unit NUMBER(18,6) NOT NULL,\n  fee_amount     NUMBER(12,6) DEFAULT 0,\n  net_amount     NUMBER(24,6) NOT NULL\n);`},
+{title:"Procedure — PLACE_BUY_ORDER (with Cursor)",desc:"Validates account status, fetches latest price, atomically updates wallet using a FOR UPDATE cursor, inserts order & transaction.",code:`CREATE OR REPLACE PROCEDURE PLACE_BUY_ORDER (\n  p_user_id  IN  NUMBER,\n  p_asset_id IN  NUMBER,\n  p_qty      IN  NUMBER,\n  p_msg      OUT VARCHAR2\n) AS\n  v_status VARCHAR2(20);\n  v_price  NUMBER;\n  CURSOR c_wallet IS\n    SELECT wallet_id, balance FROM WALLETS\n    WHERE user_id=p_user_id AND asset_id=p_asset_id\n    FOR UPDATE;\n  r_wallet c_wallet%ROWTYPE;\nBEGIN\n  SELECT account_status INTO v_status\n  FROM USERS WHERE user_id = p_user_id;\n\n  IF v_status != 'ACTIVE' THEN\n    p_msg := 'User not active'; RETURN;\n  END IF;\n\n  SELECT close_price INTO v_price\n  FROM PRICE_HISTORY\n  WHERE asset_id=p_asset_id AND ROWNUM=1;\n\n  OPEN c_wallet;\n  FETCH c_wallet INTO r_wallet;\n  IF c_wallet%FOUND THEN\n    UPDATE WALLETS SET balance=balance+p_qty\n    WHERE CURRENT OF c_wallet;\n  ELSE\n    INSERT INTO WALLETS VALUES\n      (wallet_seq.NEXTVAL, p_user_id, p_asset_id, p_qty);\n  END IF;\n  CLOSE c_wallet;\n\n  COMMIT;\n  p_msg := 'Order placed successfully';\nEXCEPTION\n  WHEN OTHERS THEN ROLLBACK;\n    p_msg := 'Error: ' || SQLERRM;\nEND;\n/`},
+{title:"Procedure — GENERATE_DAILY_SNAPSHOTS (with Cursor)",desc:"Nightly batch job: iterates all active users via cursor, calculates portfolio value and PnL, then MERGE-upserts into PORTFOLIO_SNAPSHOTS.",code:`CREATE OR REPLACE PROCEDURE GENERATE_DAILY_SNAPSHOTS AS\n  v_total_val NUMBER(24,6);\n  v_invested  NUMBER(24,6);\n  CURSOR c_users IS\n    SELECT user_id FROM USERS\n    WHERE account_status = 'ACTIVE';\nBEGIN\n  FOR r IN c_users LOOP\n    v_total_val := GET_PORTFOLIO_VALUE(r.user_id);\n    SELECT NVL(SUM(net_amount),0) INTO v_invested\n    FROM TRANSACTIONS\n    WHERE user_id=r.user_id AND txn_type='BUY';\n\n    MERGE INTO PORTFOLIO_SNAPSHOTS ps\n    USING (SELECT r.user_id AS uid FROM DUAL) src\n    ON (ps.user_id=src.uid AND ps.snap_date=TRUNC(SYSDATE))\n    WHEN MATCHED THEN UPDATE SET\n      total_value_usd=v_total_val,\n      pnl_usd=v_total_val - v_invested\n    WHEN NOT MATCHED THEN INSERT\n      VALUES (seq.NEXTVAL, r.user_id, TRUNC(SYSDATE),\n              v_total_val, v_invested,\n              v_total_val-v_invested, ...);\n  END LOOP;\n  COMMIT;\nEND;\n/`},
+{title:"Function — GET_USER_PNL",desc:"Returns realized profit/loss: SELL proceeds minus BUY spend.",code:`CREATE OR REPLACE FUNCTION GET_USER_PNL (\n  p_user_id IN NUMBER\n) RETURN NUMBER AS\n  v_bought NUMBER(24,6) := 0;\n  v_sold   NUMBER(24,6) := 0;\nBEGIN\n  SELECT NVL(SUM(net_amount),0) INTO v_bought\n  FROM TRANSACTIONS\n  WHERE user_id=p_user_id AND txn_type='BUY';\n\n  SELECT NVL(SUM(net_amount),0) INTO v_sold\n  FROM TRANSACTIONS\n  WHERE user_id=p_user_id AND txn_type='SELL';\n\n  RETURN ROUND(v_sold - v_bought, 2);\nEND GET_USER_PNL;\n/`},
+{title:"Function — GET_PORTFOLIO_VALUE",desc:"Calculates total live USD value of all holdings by joining wallets with latest price history.",code:`CREATE OR REPLACE FUNCTION GET_PORTFOLIO_VALUE (\n  p_user_id IN NUMBER\n) RETURN NUMBER AS\n  v_total NUMBER(24,6) := 0;\n  v_price NUMBER(18,6);\nBEGIN\n  FOR r IN (\n    SELECT asset_id, balance FROM WALLETS\n    WHERE user_id=p_user_id AND balance>0\n  ) LOOP\n    SELECT close_price INTO v_price FROM (\n      SELECT close_price FROM PRICE_HISTORY\n      WHERE asset_id=r.asset_id\n      ORDER BY recorded_at DESC\n    ) WHERE ROWNUM=1;\n    v_total := v_total + (r.balance * v_price);\n  END LOOP;\n  RETURN ROUND(v_total, 2);\nEND GET_PORTFOLIO_VALUE;\n/`},
+{title:"Trigger — TRG_UPDATE_ORDER_STATUS",desc:"After a transaction insert, auto-stamps the parent order as FILLED.",code:`CREATE OR REPLACE TRIGGER TRG_UPDATE_ORDER_STATUS\nAFTER INSERT ON TRANSACTIONS\nFOR EACH ROW\nBEGIN\n  UPDATE ORDERS\n  SET status='FILLED', filled_at=:NEW.txn_at\n  WHERE order_id=:NEW.order_id\n  AND status != 'FILLED';\nEND TRG_UPDATE_ORDER_STATUS;\n/`},
+{title:"Trigger — TRG_BLOCK_SUSPENDED_ORDERS",desc:"Prevents SUSPENDED or CLOSED accounts from placing new orders.",code:`CREATE OR REPLACE TRIGGER TRG_BLOCK_SUSPENDED_ORDERS\nBEFORE INSERT ON ORDERS\nFOR EACH ROW\nDECLARE\n  v_status VARCHAR2(20);\nBEGIN\n  SELECT account_status INTO v_status\n  FROM USERS WHERE user_id=:NEW.user_id;\n\n  IF v_status IN ('SUSPENDED','CLOSED') THEN\n    RAISE_APPLICATION_ERROR(-20002,\n      'Order rejected: account is ' || v_status);\n  END IF;\nEND TRG_BLOCK_SUSPENDED_ORDERS;\n/`}
+];

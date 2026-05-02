@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeDB — Crypto & Stock Trading Platform</title>
+<meta name="description" content="Cryptocurrency & Stock Transaction Management System — DBMS Project Dashboard">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon">◈</span>
+    <div>
+      <h1 class="brand-name">TradeDB</h1>
+      <p class="brand-sub">DBMS Project</p>
+    </div>
+  </div>
+  <div class="sidebar-sep"></div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <button class="nav-btn active" data-section="dashboard"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-btn" data-section="users"><span class="nav-icon">👤</span>Users</button>
+    <button class="nav-btn" data-section="assets"><span class="nav-icon">💰</span>Assets & Prices</button>
+    <button class="nav-btn" data-section="orders"><span class="nav-icon">📋</span>Orders</button>
+    <button class="nav-btn" data-section="transactions"><span class="nav-icon">🔄</span>Transactions</button>
+    <button class="nav-btn" data-section="placeorder"><span class="nav-icon">➕</span>Place Order</button>
+    <button class="nav-btn" data-section="sqlref"><span class="nav-icon">🖥</span>SQL Reference</button>
+  </nav>
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-footer">
+    <span class="demo-badge">● Demo Mode (In-Memory)</span>
+    <span class="demo-sub">Schema: Oracle PL/SQL</span>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content" id="mainContent">
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <section class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h2>Dashboard</h2>
+      <span class="header-date" id="headerDate"></span>
+    </div>
+
+    <!-- Price Ticker -->
+    <div class="ticker-strip" id="tickerStrip"></div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Portfolio Distribution</h3>
+        <div class="chart-wrap"><canvas id="portfolioChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>7-Day Price Trend (BTC)</h3>
+        <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="section-card">
+      <h3>Recent Transactions</h3>
+      <div class="table-wrap" id="dashTxnTable"></div>
+    </div>
+  </section>
+
+  <!-- ==================== USERS ==================== -->
+  <section class="page" id="page-users">
+    <div class="page-header"><h2>Users</h2>
+      <input type="text" class="search-input" id="userSearch" placeholder="Search users...">
+    </div>
+    <div class="section-card">
+      <div class="table-wrap" id="usersTable"></div>
+    </div>
+  </section>
+
+  <!-- ==================== ASSETS ==================== -->
+  <section class="page" id="page-assets">
+    <div class="page-header"><h2>Assets & Live Prices</h2></div>
+    <div class="assets-grid" id="assetsGrid"></div>
+  </section>
+
+  <!-- ==================== ORDERS ==================== -->
+  <section class="page" id="page-orders">
+    <div class="page-header"><h2>Orders</h2>
+      <div class="filter-group" id="orderFilters">
+        <button class="filter-btn active" data-filter="ALL">All</button>
+        <button class="filter-btn" data-filter="PENDING">Pending</button>
+        <button class="filter-btn" data-filter="FILLED">Filled</button>
+        <button class="filter-btn" data-filter="CANCELLED">Cancelled</button>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="table-wrap" id="ordersTable"></div>
+    </div>
+  </section>
+
+  <!-- ==================== TRANSACTIONS ==================== -->
+  <section class="page" id="page-transactions">
+    <div class="page-header"><h2>Transactions</h2></div>
+    <div class="section-card">
+      <div class="table-wrap" id="txnTable"></div>
+    </div>
+  </section>
+
+  <!-- ==================== PLACE ORDER ==================== -->
+  <section class="page" id="page-placeorder">
+    <div class="page-header"><h2>Place New Order</h2></div>
+    <div class="order-form-card">
+      <div class="form-row">
+        <label>User</label>
+        <select id="orderUser"></select>
+      </div>
+      <div class="form-row">
+        <label>Asset</label>
+        <select id="orderAsset"></select>
+      </div>
+      <div class="form-row">
+        <label>Order Type</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" data-val="BUY" id="typeBuy">BUY</button>
+          <button class="toggle-btn" data-val="SELL" id="typeSell">SELL</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Order Mode</label>
+        <select id="orderMode">
+          <option>MARKET</option><option>LIMIT</option><option>STOP</option><option>STOP_LIMIT</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Quantity</label>
+        <input type="number" id="orderQty" placeholder="0.00" step="any" min="0">
+      </div>
+      <div class="form-row">
+        <label>Limit Price (optional)</label>
+        <input type="number" id="orderPrice" placeholder="Market price" step="any" min="0">
+      </div>
+      <div class="order-summary" id="orderSummary"></div>
+      <button class="submit-btn" id="submitOrder">Submit Order</button>
+      <div class="order-result" id="orderResult"></div>
+    </div>
+  </section>
+
+  <!-- ==================== SQL REFERENCE ==================== -->
+  <section class="page" id="page-sqlref">
+    <div class="page-header"><h2>SQL & PL/SQL Reference</h2></div>
+    <div class="sql-sections" id="sqlSections"></div>
+  </section>
+
+</main>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
