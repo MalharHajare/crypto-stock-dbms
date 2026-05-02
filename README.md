@@ -111,7 +111,7 @@ sql/
 
 ## 👤 Authors
 
-- **Aryan Shah** — DBMS Project
+- **Malhar Hajare** — DBMS Project
 
 ---
 
