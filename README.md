@@ -111,7 +111,9 @@ sql/
 
 ## 👤 Authors
 
-- **Malhar Hajare** — DBMS Project
+- **Malhar Hajare**
+- **Abhishek Walande** 
+— DBMS Project
 
 ---
 
